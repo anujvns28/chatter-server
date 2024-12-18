@@ -33,7 +33,10 @@ dbConnection();
 // Initialize socket.io with CORS configuration
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://chatter-server-c8kd.onrender.com",
+    ],
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -51,7 +54,10 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://chatter-server-c8kd.onrender.com",
+    ],
     credentials: true,
   })
 );
