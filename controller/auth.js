@@ -76,6 +76,7 @@ exports.signUp = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
+    console.log("login route", req.body);
 
     // Check if email or password is missing
     if (!username || !password) {
