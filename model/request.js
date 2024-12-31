@@ -22,6 +22,14 @@ const friendRequestSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isGroup: {
+      type: Boolean,
+      default: false,
+    },
+    groupId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Chat",
+    },
   },
   {
     timestamps: true,

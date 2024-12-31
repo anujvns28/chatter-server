@@ -6,29 +6,34 @@ const chatSchema = new mongoose.Schema(
     chatName: {
       type: String,
       trim: true,
-      default: "Chat", 
+      default: "Chat",
+    },
+    chatImg: {
+      type: String,
     },
     isGroupChat: {
       type: Boolean,
-      default: false, 
+      default: false,
     },
     users: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User", 
+        ref: "User",
       },
     ],
     latestMessage: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Message", 
+      ref: "Message",
     },
-    groupAdmin: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User", 
-      required: function () {
-        return this.isGroupChat;
+    groupAdmin: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: function () {
+          return this.isGroupChat;
+        },
       },
-    },
+    ],
   },
   {
     timestamps: true,

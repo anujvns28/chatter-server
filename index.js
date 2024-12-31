@@ -9,6 +9,7 @@ const cookieParser = require("cookie-parser");
 const authRoutes = require("./routers/auth");
 const userRoutes = require("./routers/user");
 const chatRoutes = require("./routers/chat");
+const groupRoutes = require("./routers/group");
 const { createfakeUser } = require("./seeders/user");
 
 //import for socket
@@ -73,6 +74,7 @@ app.use(
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/chat", chatRoutes);
+app.use("/api/v1/group", groupRoutes);
 
 //socekt code here
 

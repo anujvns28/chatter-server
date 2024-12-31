@@ -36,21 +36,23 @@ exports.fetchAllChats = async (req, res) => {
     // Modify chat data to add dynamic chatName and chatImage
     let chats = await Promise.all(
       user.chats.map(async (chat) => {
+        let unReadMessages = [];
+
+        unReadMessages = await Message.find({
+          chat: chat._id,
+          readBy: { $nin: [req.userId] },
+          sender: { $ne: userId },
+          isNotification: false,
+        });
+
         if (!chat.isGroupChat) {
           const otherUser = chat.users.find((u) => u._id.toString() !== userId);
-          let unReadMessages = [];
-
-          unReadMessages = await Message.find({
-            chat: chat._id,
-            isRead: false,
-            sender: { $ne: userId },
-            isNotification: false,
-          });
 
           return {
             _id: chat._id,
             chatName: otherUser.name,
             chatImage: otherUser.profilePic,
+            userId: otherUser._id,
             latestMessage: chat.latestMessage,
             unReadMessageCount: unReadMessages.length,
           };
@@ -59,7 +61,7 @@ exports.fetchAllChats = async (req, res) => {
         return {
           _id: chat._id,
           chatName: chat.chatName,
-          chatImage: "group-default-image-url",
+          chatImage: chat.chatImg,
           latestMessage: chat.latestMessage,
           unReadMessageCount: unReadMessages.length,
         };
@@ -93,8 +95,6 @@ exports.fetchAllChats = async (req, res) => {
 exports.fetchChatDetails = async (req, res) => {
   try {
     const { chatId } = req.body;
-
-    console.log(chatId, "this is cha id");
 
     const chat = await Chat.findById(chatId).exec();
 
@@ -155,13 +155,6 @@ exports.sendMessage = async (req, res) => {
       "name profilePic username"
     );
 
-    // find other userid
-    const otherUser = chat.users
-      .find((u) => u.toString() !== req.userId)
-      .toString();
-
-    const socket = globalUsers.get(otherUser);
-
     if (!chat) {
       return res.status(400).json({
         success: false,
@@ -169,11 +162,19 @@ exports.sendMessage = async (req, res) => {
       });
     }
 
+    // message for db
     const message = await Message.create({
       sender: req.userId,
       content: content,
       chat: chatId,
+      readBy: [req.userId],
     });
+
+    // find other userid
+    const otherUser = chat.users.filter((u) => u.toString() !== req.userId);
+
+    console.log(chat.users, "this is all users");
+    console.log("otheruser", otherUser);
 
     // send realtime message
 
@@ -187,9 +188,14 @@ exports.sendMessage = async (req, res) => {
       createdAt: new Date().toISOString(),
     };
 
-    if (!chat.isGroup && socket) {
-      io.to(socket).emit("sendMessage", rtMessage);
-      io.to(socket).emit("updateChat", "update");
+    if (otherUser) {
+      otherUser.forEach((user) => {
+        const socketId = globalUsers.get(user.toString());
+        if (socketId) {
+          io.to(socketId).emit("sendMessage", rtMessage);
+          io.to(socketId).emit("updateChat", "update");
+        }
+      });
     }
 
     // Emit event to the sender for their chat update
@@ -262,7 +268,9 @@ exports.getMessages = async (req, res) => {
 exports.updateReadStatusOfMessage = async (req, res) => {
   try {
     const { chatId } = req.body;
-    console.log(chatId, "from message read ");
+
+    console.log(req.body);
+    console.log("calling updated status");
 
     const chat = await Chat.findById(chatId);
     let updatedMessageIds = [];
@@ -273,55 +281,46 @@ exports.updateReadStatusOfMessage = async (req, res) => {
         message: "this is not vallied chat",
       });
     }
+    // finding all messages
+    const messages = await Message.find({
+      chat: chatId,
+      readBy: { $nin: [req.userId] },
+      sender: { $ne: req.userId },
+      isNotification: false,
+    });
 
-    const messages = await Message.find({ chat: chatId, isRead: false });
+    console.log(messages.length, "this is unread messagess");
 
-    if (!chat.isGroupChat) {
-      const promises = messages.map(async (message) => {
-        if (message.sender && message.sender.toString() !== req.userId) {
-          await Message.findByIdAndUpdate(
-            message._id,
-            { isRead: true },
-            { new: true }
-          );
-          updatedMessageIds.push(message._id);
-        }
-      });
-      await Promise.all(promises);
-    } else {
-      messages.map(async (message) => {
-        if (message.sender._id !== req.userId) {
-          await Message.findByIdAndUpdate(
-            message._id,
-            {
-              $push: {
-                readBy: req.userId,
-              },
+    await Promise.all(
+      messages.map(async (m) => {
+        await Message.findByIdAndUpdate(
+          m._id,
+          {
+            $push: {
+              readBy: req.userId,
             },
-            { new: true }
-          );
-        }
-        const messageUpdated = await Message.findById(message._id);
-        if (messageUpdated.readBy.length === chat.users.length - 1) {
-          await Message.findByIdAndUpdate(
-            message._id,
-            { isRead: true },
-            { new: true }
-          );
-        }
-      });
-    }
+          },
+          { new: true }
+        );
+
+        updatedMessageIds.push(m._id);
+      })
+    );
 
     // send user real time to reciver is read message
-    const io = req.app.locals.io;
-    const otheruser = chat.users
-      .find((u) => u.toString() != req.userId)
-      .toString();
-    const socket = globalUsers.get(otheruser);
-    console.log(updatedMessageIds, "this is unreqd messges id");
 
-    if (socket) {
-      io.to(socket).emit("messageRead", { messageIds: updatedMessageIds });
+    const io = req.app.locals.io;
+
+    const otherUsers = chat.users.filter((u) => u.toString() !== req.userId);
+    if (otherUsers) {
+      otherUsers.forEach((user) => {
+        const socketId = globalUsers.get(user.toString());
+        if (socketId) {
+          io.to(socketId).emit("messageRead", {
+            messageIds: updatedMessageIds,
+          });
+        }
+      });
     }
 
     return res.status(200).json({

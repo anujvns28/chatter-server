@@ -9,15 +9,8 @@ exports.searchUser = async (req, res) => {
 
     const user = await User.findById(req.userId).populate("chats").exec();
 
-    const frainds = user.chats.map((chat) => {
-      if (!chat.isGroupCht) {
-        const fraind = chat.users.find((u) => u.toString() !== req.userId);
-        return fraind.toString();
-      }
-    });
-
     const searchUsers = await User.find({
-      _id: { $nin: [...frainds, req.userId] },
+      _id: { $nin: [req.userId] },
       $or: [
         { name: { $regex: name, $options: "i" } },
         { username: { $regex: name, $options: "i" } },
@@ -102,11 +95,10 @@ exports.updateUserStatus = async (req, res) => {
     });
 
     // send status update to the all online frainds
-    console.log(friends, "friends list");
+
     friends.forEach((userId) => {
       const socketId = globalUsers.get(userId);
       if (socketId) {
-        console.log(userId, "online users");
         io.to(socketId).emit("status-update", "user status is updated");
       }
     });
