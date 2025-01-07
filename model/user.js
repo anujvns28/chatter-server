@@ -51,6 +51,18 @@ const userSchema = new mongoose.Schema(
         ref: "Chat", // Reference to the Chat model
       },
     ],
+    token: {
+      value: {
+        type: String,
+        default: null,
+      },
+      expiry: {
+        type: Date,
+        default: null,
+        // Ensure the field expires automatically after 15 minutes
+        index: { expires: "15m" },
+      },
+    },
   },
   {
     timestamps: true,

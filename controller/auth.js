@@ -9,8 +9,6 @@ exports.signUp = async (req, res) => {
     //fetchin data
     const { name, username, password, email } = req.body;
 
-    console.log(req.body, "filses");
-
     const avatar = req.files.image;
 
     if (!name || !username || !password || !email || !avatar) {
@@ -28,11 +26,7 @@ exports.signUp = async (req, res) => {
         message: "username already exists. Please sign in to continue.",
       });
     }
-    console.log("ok1");
     const avatarUrl = await uploadImageToCloudinary(avatar);
-    console.log("ok2");
-
-    console.log(avatarUrl);
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -76,7 +70,6 @@ exports.signUp = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
-    console.log("login route", req.body);
 
     // Check if email or password is missing
     if (!username || !password) {
@@ -98,7 +91,7 @@ exports.login = async (req, res) => {
     }
 
     //  Compare Password
-    if (!(await bcrypt.compare(password, user.password))) {
+    if (await bcrypt.compare(password, user.password)) {
       const token = jwt.sign(
         { username: user.username, _id: user._id },
         process.env.JWT_SECRET,
@@ -110,7 +103,6 @@ exports.login = async (req, res) => {
       const options = {
         expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
       };
-      
 
       res.cookie("token", token, options).status(200).json({
         success: true,

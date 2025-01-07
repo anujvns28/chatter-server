@@ -119,7 +119,6 @@ exports.fetchChatDetails = async (req, res) => {
 
       chatDetails = await chat.populate({
         path: "users",
-        match: { _id: otherUserId },
         select: "name profilePic username status lastSeen",
       });
     }
@@ -229,6 +228,10 @@ exports.sendMessage = async (req, res) => {
 exports.getMessages = async (req, res) => {
   try {
     const { chatId } = req.body;
+    const { page = 1 } = req.query;
+    console.log(page, "this is page nomber");
+    const limit = 8;
+    const skip = (page - 1) * limit;
 
     if (!chatId) {
       return res.status(400).json({
@@ -248,13 +251,19 @@ exports.getMessages = async (req, res) => {
     }
 
     // Fetch all messages related to the chat
-    const messages = await Message.find({ chat: chatId })
-      .populate("sender", "name profilePic")
-      .sort({ createdAt: 1 });
+    const [messages, totalMessageCount] = await Promise.all([
+      Message.find({ chat: chatId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate("sender", "name profilePic"),
+      Message.countDocuments({ chat: chatId }),
+    ]);
 
     return res.status(200).json({
       success: true,
-      messages,
+      messages: messages.reverse(),
+      totalMessageCount,
     });
   } catch (err) {
     console.log(err, "Error occurred while fetching messages");
@@ -268,9 +277,6 @@ exports.getMessages = async (req, res) => {
 exports.updateReadStatusOfMessage = async (req, res) => {
   try {
     const { chatId } = req.body;
-
-    console.log(req.body);
-    console.log("calling updated status");
 
     const chat = await Chat.findById(chatId);
     let updatedMessageIds = [];
@@ -288,8 +294,6 @@ exports.updateReadStatusOfMessage = async (req, res) => {
       sender: { $ne: req.userId },
       isNotification: false,
     });
-
-    console.log(messages.length, "this is unread messagess");
 
     await Promise.all(
       messages.map(async (m) => {

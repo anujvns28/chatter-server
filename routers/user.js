@@ -1,7 +1,12 @@
 const express = require("express");
 const router = express.Router();
 
-const { searchUser, updateUserStatus } = require("../controller/user");
+const {
+  searchUser,
+  updateUserStatus,
+  resetPasswordLink,
+  updatePassword,
+} = require("../controller/user");
 const { auth } = require("../middleware/auth");
 const {
   sendFriendRequest,
@@ -15,5 +20,7 @@ router.post("/sendFriendRequest", auth, sendFriendRequest);
 router.post("/respondToFraindRequest", auth, respondToFriendRequest);
 router.post("/fetchAllFraindRequests", auth, fetchAllRequest);
 router.post("/updateUserStatus", auth, updateUserStatus);
+router.post("/sendResetLink", resetPasswordLink);
+router.post("/updatePassword", updatePassword);
 
 module.exports = router;

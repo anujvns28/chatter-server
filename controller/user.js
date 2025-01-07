@@ -2,6 +2,9 @@ const Chat = require("../model/chat");
 const User = require("../model/user");
 const Request = require("../model/request");
 const { globalUsers } = require("../service/socketMap");
+const Crypto = require("crypto");
+const mailSender = require("../config/sendMail");
+const bcrypt = require("bcrypt");
 
 exports.searchUser = async (req, res) => {
   try {
@@ -116,4 +119,101 @@ exports.updateUserStatus = async (req, res) => {
   }
 };
 
+exports.resetPasswordLink = async (req, res) => {
+  try {
+    const { mail } = req.body;
+
+    if (!mail) {
+      return res.status(500).json({
+        success: false,
+        message: "mail is required",
+      });
+    }
+
+    // fetch user
+    const user = await User.findOne({ email: mail });
+
+    if (!user) {
+      return res.status(500).json({
+        success: false,
+        message: "email is not registerd with us",
+      });
+    }
+
+    // creating token
+    const token = Crypto.randomBytes(20).toString("hex");
+    // update user
+
+    await User.findByIdAndUpdate(
+      user._id,
+      {
+        token: token,
+      },
+      { new: true }
+    );
+
+    // send mail
+    const url = `http://localhost:5173/forgot-password/${token}`;
+
+    await mailSender(
+      mail,
+      "Password Reset",
+      `Your Link for email verification is ${url}. Please click this url to reset your password.`
+    );
+
+    return res.status(200).json({
+      success: false,
+      message: "pasword rest linke send successfullly",
+    });
+  } catch (err) {
+    console.log("error occured in sending rest link", err);
+    return res.status(500).json({
+      success: false,
+      message: "eroro occured in sending rest password email",
+    });
+  }
+};
+
+exports.updatePassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(500).json({
+        success: false,
+        message: "token is required",
+      });
+    }
+    console.log("token", token);
+    const user = await User.findOne({ token: token });
+
+    if (!user) {
+      return res.status(500).json({
+        success: false,
+        message: "token is expire",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await User.findByIdAndUpdate(
+      user._id,
+      {
+        password: hashedPassword,
+      },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "password updated",
+    });
+  } catch (err) {
+    console.log("err occured in updating password", err);
+    return res.status(500).json({
+      success: false,
+      message: "error occured in updating password",
+    });
+  }
+};
 
