@@ -56,11 +56,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://chattkaro.vercel.app/",
-      "https://chatter-server-c8kd.onrender.com",
-    ],
+    origin: "*",
     credentials: true,
   })
 );
