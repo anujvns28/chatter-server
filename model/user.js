@@ -59,7 +59,6 @@ const userSchema = new mongoose.Schema(
       expiry: {
         type: Date,
         default: null,
-        // Ensure the field expires automatically after 15 minutes
         index: { expires: "15m" },
       },
     },

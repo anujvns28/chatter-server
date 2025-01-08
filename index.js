@@ -36,6 +36,7 @@ const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:5173",
+      "https://chattkaro.vercel.app/",
       "https://chatter-server-c8kd.onrender.com",
     ],
     methods: ["GET", "POST"],
@@ -57,6 +58,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
+      "https://chattkaro.vercel.app/",
       "https://chatter-server-c8kd.onrender.com",
     ],
     credentials: true,
