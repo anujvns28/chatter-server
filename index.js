@@ -34,11 +34,7 @@ dbConnection();
 // Initialize socket.io with CORS configuration
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:5173",
-      "https://chattkaro.vercel.app/",
-      "https://chatter-server-c8kd.onrender.com",
-    ],
+    origin: ["http://localhost:5173", "https://chattkaro.vercel.app/"],
     methods: ["GET", "POST"],
     credentials: true,
   },
