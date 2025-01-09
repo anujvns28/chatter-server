@@ -35,7 +35,7 @@ dbConnection();
 const io = new Server(server, {
   cors: {
     origin: [
-      "https://chattkaro.vercel.app", // Frontend URL
+      "http://localhost:5173", // Frontend URL
     ],
     methods: ["GET", "POST"],
     credentials: true, // Allow cookies and credentials

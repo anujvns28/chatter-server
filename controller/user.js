@@ -153,7 +153,7 @@ exports.resetPasswordLink = async (req, res) => {
     );
 
     // send mail
-    const url = `http://localhost:5173/forgot-password/${token}`;
+    const url = `https://chattkaro.vercel.app/forgot-password/${token}`;
 
     await mailSender(
       mail,
