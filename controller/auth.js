@@ -42,18 +42,12 @@ exports.signUp = async (req, res) => {
 
     const token = jwt.sign(
       { username: username, _id: user._id },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "24h",
-      }
+      process.env.JWT_SECRET
     );
 
     user.token = token;
-    const options = {
-      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-    };
 
-    return res.cookie("token", token, options).status(200).json({
+    return res.cookie("token", token).status(200).json({
       success: true,
       user,
       message: "User registered successfully",
@@ -94,17 +88,10 @@ exports.login = async (req, res) => {
     if (await bcrypt.compare(password, user.password)) {
       const token = jwt.sign(
         { username: user.username, _id: user._id },
-        process.env.JWT_SECRET,
-        {
-          expiresIn: "24h",
-        }
+        process.env.JWT_SECRET
       );
 
-      const options = {
-        expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-      };
-
-      res.cookie("token", token, options).status(200).json({
+      res.cookie("token", token).status(200).json({
         success: true,
         user,
         token,

@@ -230,7 +230,7 @@ exports.getMessages = async (req, res) => {
     const { chatId } = req.body;
     const { page = 1 } = req.query;
     console.log(page, "this is page nomber");
-    const limit = 8;
+    const limit = 20;
     const skip = (page - 1) * limit;
 
     if (!chatId) {
