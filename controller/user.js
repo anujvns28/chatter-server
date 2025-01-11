@@ -1,7 +1,7 @@
 const Chat = require("../model/chat");
 const User = require("../model/user");
 const Request = require("../model/request");
-const { globalUsers } = require("../service/socketMap");
+const { globalUsers, getSocketIdByUserId } = require("../service/socketMap");
 const Crypto = require("crypto");
 const mailSender = require("../config/sendMail");
 const bcrypt = require("bcrypt");
@@ -213,6 +213,71 @@ exports.updatePassword = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "error occured in updating password",
+    });
+  }
+};
+
+exports.TypingStatus = async (req, res) => {
+  try {
+    const { chatId, typingStatus } = req.body;
+
+    if (!chatId) {
+      return res.status(400).json({
+        success: false,
+        message: "chatid is required",
+      });
+    }
+
+    if (!typingStatus) {
+      return res.status(400).json({
+        success: false,
+        message: "typingStatus is required",
+      });
+    }
+
+    const chat = await Chat.findById(chatId);
+    const userDetails = await User.findById(req.userId);
+
+    if (chat.users.length > 1) {
+      const otherUser = chat.users.filter((u) => req.userId !== u.toString());
+      console.log("this is other users", otherUser);
+
+      const io = req.app.locals.io;
+      if (typingStatus === "Typing") {
+        otherUser.map((user) => {
+          const socketId = getSocketIdByUserId(user.toString());
+          if (socketId) {
+            const data = {
+              typerId: req.userId,
+              chatId: chatId,
+              img: userDetails.profilePic,
+            };
+            io.to(socketId).emit("typing", data);
+          }
+        });
+      } else {
+        otherUser.map((user) => {
+          const socketId = getSocketIdByUserId(user.toString());
+          if (socketId) {
+            const data = {
+              typerId: req.userId,
+              chatId: chatId,
+            };
+            io.to(socketId).emit("stopTyping", data);
+          }
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: false,
+      message: "typing status successfull",
+    });
+  } catch (err) {
+    console.log("erroro occured in typing statts", err);
+    return res.status(500).json({
+      success: false,
+      message: "error occured in typing status",
     });
   }
 };

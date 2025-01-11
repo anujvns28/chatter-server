@@ -6,6 +6,7 @@ const {
   updateUserStatus,
   resetPasswordLink,
   updatePassword,
+  TypingStatus,
 } = require("../controller/user");
 const { auth } = require("../middleware/auth");
 const {
@@ -22,5 +23,6 @@ router.post("/fetchAllFraindRequests", auth, fetchAllRequest);
 router.post("/updateUserStatus", auth, updateUserStatus);
 router.post("/sendResetLink", resetPasswordLink);
 router.post("/updatePassword", updatePassword);
+router.post("/typingStatus", auth, TypingStatus);
 
 module.exports = router;
