@@ -216,7 +216,7 @@ exports.sendMessage = async (req, res) => {
     const otherUserDetails = await User.findById(otherUser[0].toString());
     const socId = globalUsers.get(otherUser.toString());
     console.log(socId, "thisi is socete id ");
-    if (!socId && otherUserDetails && otherUserDetails.FCM_token) {
+    if (otherUserDetails && otherUserDetails.FCM_token) {
       console.log("comming at sending notification");
       const message = {
         token: otherUserDetails.FCM_token,
