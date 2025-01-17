@@ -215,7 +215,9 @@ exports.sendMessage = async (req, res) => {
     // push notification when user is ofline only for one to one chat for testing purpose
     const otherUserDetails = await User.findById(otherUser[0].toString());
     const socId = globalUsers.get(otherUser.toString());
+    console.log(socId, "thisi is socete id ");
     if (!socId && otherUserDetails && otherUserDetails.FCM_token) {
+      console.log("comming at sending notification");
       const message = {
         token: otherUserDetails.FCM_token,
         notification: {
