@@ -19,6 +19,7 @@ const {
   addUserToMap,
   removeUserFromMap,
   getUserIdBySocketId,
+  getAllUsers,
 } = require("./service/socketMap");
 const { updateUserStatus } = require("./controller/user");
 
@@ -84,8 +85,10 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", async () => {
     console.log("User disconnected:", socket.id);
-    removeUserFromMap(socket.id);
     const userId = getUserIdBySocketId(socket.id);
+    removeUserFromMap(userId);
+
+    // console.log(getAllUsers(), "this is all socket ");
 
     // Update the user's status to "offline" using the controller or service
     if (userId) {

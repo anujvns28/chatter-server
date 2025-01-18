@@ -4,6 +4,7 @@ const Message = require("../model/message");
 const { globalUsers } = require("../service/socketMap");
 const admin = require("../config/firebase");
 
+
 exports.fetchAllChats = async (req, res) => {
   try {
     const userId = req.userId;
@@ -212,27 +213,36 @@ exports.sendMessage = async (req, res) => {
       { new: true }
     );
 
-    // push notification when user is ofline only for one to one chat for testing purpose
-    const otherUserDetails = await User.findById(otherUser[0].toString());
-    const socId = globalUsers.get(otherUser.toString());
-    console.log(socId, "thisi is socete id ");
-    if (otherUserDetails && otherUserDetails.FCM_token) {
-      console.log("comming at sending notification");
-      const message = {
-        token: otherUserDetails.FCM_token,
-        notification: {
-          title: "New Message",
-          body: `@${user.username} sent you a message.`,
-        },
-      };
+    // push notification when user is ofline
+    const otherUserDetails = await Promise.all(
+      otherUser.map((u) => User.findById(u.toString()))
+    );
 
-      try {
-        await admin.messaging().send(message);
-        console.log("Push notification sent successfully.");
-      } catch (error) {
-        console.error("Error sending push notification:", error);
+    otherUserDetails.forEach(async (fraind) => {
+      const socId = globalUsers.get(fraind.toString());
+      if (!socId && fraind && fraind.FCM_token) {
+        const message = {
+          token: fraind.FCM_token,
+          webpush: {
+            notification: {
+              title: "New Message",
+              body: `@${user.username} sent you a message: ${content}`,
+              icon: "https://pngimg.com/uploads/letter_c/letter_c_PNG35.png",
+              click_action: "https://chattkaro.vercel.app",
+            },
+          },
+        };
+
+        try {
+          await admin.messaging().send(message);
+          console.log("Push notification sent successfully.");
+        } catch (error) {
+          console.error("Error sending push notification:", error);
+        }
       }
-    }
+    });
+
+    // console.log(socId, "thisi is socete id ");
 
     return res.status(200).json({
       success: true,
@@ -252,7 +262,7 @@ exports.getMessages = async (req, res) => {
   try {
     const { chatId } = req.body;
     const { page = 1 } = req.query;
-    console.log(page, "this is page nomber");
+    // console.log(page, "this is page nomber");
     const limit = 20;
     const skip = (page - 1) * limit;
 
