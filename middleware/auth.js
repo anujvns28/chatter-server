@@ -15,7 +15,7 @@ exports.auth = async (req, res, next) => {
     if (!decodeToken) {
       return res.status(500).json({
         success: false,
-        messeage: "token is invallied",
+        messeage: "token is invallied",   
       });
     }
 

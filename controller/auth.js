@@ -45,11 +45,12 @@ exports.signUp = async (req, res) => {
       process.env.JWT_SECRET
     );
 
-    user.token = token;
+    console.log("token--------", token);
 
     return res.cookie("token", token).status(200).json({
       success: true,
       user,
+      token,
       message: "User registered successfully",
     });
   } catch (error) {
